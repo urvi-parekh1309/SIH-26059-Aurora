@@ -84,8 +84,7 @@ from src.routing.scenario_router import (                  # noqa: E402
 CACHE = ROOT / "backend" / "cache"
 ROUTE_JSON = ROOT / "outputs" / "final_demo" / "final_route.json"
 AURORA_DIST = ROOT / "frontend" / "aurora" / "dist"
-ROUTE_DEMO_DIST = ROOT / "frontend" / "route_demo" / "dist"
-FRONTEND_DIST = AURORA_DIST if (AURORA_DIST / "index.html").exists() else ROUTE_DEMO_DIST
+FRONTEND_DIST = AURORA_DIST
 
 # ---------------------------------------------------------------------------
 # Dataset location — resolved by configuration, never hardcoded here.
@@ -2030,7 +2029,7 @@ def create_app() -> Flask:
             return send_from_directory(str(FRONTEND_DIST), "index.html")
         return jsonify({
             "status": "backend running",
-            "hint": "build the React app with: cd frontend/route_demo && "
+            "hint": "build the React app with: cd frontend/aurora && "
                     "npm install && npm run build  (or use npm run dev)",
             "endpoints": ["/api/health", "/api/sic/metadata",
                           "/api/sic/<timestep>", "/api/route",

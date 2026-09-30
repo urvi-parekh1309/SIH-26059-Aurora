@@ -41,31 +41,52 @@ assets. The raw satellite/reanalysis downloads (~40 GB) and the regenerable ≥1
 cache are **not** committed (git ignores them — see the per-file size note in
 `.gitignore`), so the router and the frontend run directly from the committed artifacts.
 
-### Frontend
+### 1. Interactive Full-Stack Web Application (Recommended for Hackathon Evaluation)
 
-No build step and no backend process — `frontend/index.html` + `frontend/data/*` are
-pre-generated, static files:
+The Flask backend compositor serves both the complete REST API (27 endpoints) and the pre-built, production-ready React Aurora frontend (`frontend/aurora/dist`) in a **single command** — zero Node/npm setup required:
 
-    cd frontend
-    python -m http.server 8000        # open http://localhost:8000
+```bash
+# 1. Activate your Python environment (Python 3.10+):
+.venv\Scripts\activate            # Windows (or: source .venv/bin/activate on Linux/macOS)
 
-First load needs internet for D3 from the d3js.org CDN (the only external runtime dependency);
-hard-refresh with Ctrl+Shift+R if frames look stale. The viewer shows the 2026 Jan–Jun test
-window for day-1/2/3 horizons, actual-vs-predicted overlay, and confidence/uncertainty info.
+# 2. Start the API & Application server:
+python -m backend.api.main --port 8078
+```
 
-### Backend
+Open **`http://localhost:8078/`** in your browser. You can explore:
+- **Route Planner (`/routes`)**: Interactive 8-connected A* environmental routing with real-time waypoint replanning, ice avoidance, and dynamic rerouting across Cape Town, Maitri, Bharati, and custom stations.
+- **Operations Map (`/navigation`)**: High-fidelity Leaflet map with Web Mercator projected sea-ice rasters, Natural Earth coastlines, and Indian Antarctic stations.
+- **SIC Forecaster (`/forecast`)**: 3-day lead-time ConvLSTM ensemble forecast player with uncertainty intervals and MIZ error diagnostics.
+- **Analytics & Overview (`/analytics`, `/`)**: Comprehensive evaluation metrics, regret distributions, and model performance comparisons.
+
+*(Optional)* For frontend development with live hot-reloading:
+```bash
+cd frontend/aurora
+npm install
+npm run dev      # Opens on http://localhost:5173 (automatically proxies /api to port 8078)
+```
+
+### 2. Static Lightweight Viewer (Zero-Dependency Fallback)
+
+No build step and no backend process needed — `frontend/index.html` + `frontend/data/*` are pre-generated static files:
+
+```bash
+python -m http.server 8000 --directory frontend        # open http://localhost:8000/
+```
+
+### 3. Backend Route Engine & Verification
 
 The A* router reads the committed grids in `backend/cache/` (`routing_sic_2026.npy`,
-`routing_cost_x/y_2026.npy`, `routing_multiplier`, `routing_station_goals.json`, land/override
-masks) and reproduces the validated Cape Town → Maitri route, without any raw data:
+`routing_cost_x/y_2026.npy`, `routing_multiplier_2026.npy`, `routing_station_goals.json`, land/override
+masks) and reproduces the validated Cape Town → Maitri route:
 
-    .venv\Scripts\activate            # Windows; Linux/macOS: source .venv/bin/activate
-    python backend/scripts/build_router.py
-    # -> backend/plots/route_validation.png, backend/cache/route_capetown_maitri_2026-01-06.json
+```bash
+python backend/scripts/build_router.py
+# -> outputs/final_demo/SIH2026059_final_route.png, backend/cache/route_capetown_maitri_2026-01-06.json
+```
 
-All reported numbers are also already committed (`backend/cache/metrics_*.json`,
-`uncertainty_stats.json`, `route_*.json`), so the backend analysis is viewable without running
-any code.
+All reported numbers are already committed (`backend/cache/metrics_*.json`,
+`uncertainty_stats.json`, `route_*.json`), so the backend analysis is verifiable immediately without any raw satellite data downloads.
 
 > To regenerate predictions, metrics, or the frontend data from raw observations instead of the
 > committed artifacts, follow **Full reproduction** below — that path downloads ~40 GB of data
